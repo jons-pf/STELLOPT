@@ -45,7 +45,7 @@
       INTEGER :: i,j,k,ier, iunit, nextcur_in, nshar
       INTEGER :: bcs1(2), bcs2(2), bcs3(2), bcs1_s(2)
       REAL(rprec) :: br, bphi, bz, ti_temp, vtemp
-      REAL(rprec), DIMENSION(:), ALLOCATABLE :: R_wall_temp
+      REAL(rprec), DIMENSION(:), ALLOCATABLE :: R_wall_temp, Z_wall_temp
       REAL(rprec) :: stemp, utemp, rtemp, ztemp, phitemp
 !-----------------------------------------------------------------------
 !     External Functions
@@ -356,6 +356,24 @@
             IF (ier /=0 ) WRITE(6,'(A)') 'ERROR: Loading VESSEL : ' // TRIM(vessel_string)
             IF (ier ==-327 ) WRITE(6,'(A)') '   ZERO Area Triagle detected!!!!'
          END IF
+      ELSE IF (.not. lwall_loaded) THEN ! Handle no wall
+         k = 2*nr + 2*(nz-2)
+         ALLOCATE(R_wall_temp(k),Z_wall_temp(k))
+         i = 1; j = nr
+         R_wall_temp(i:j) = raxis
+         Z_wall_temp(i:j) = zaxis(1)
+         i = j; j = j + nz - 1
+         R_wall_temp(i:j) = raxis(nr)
+         Z_wall_temp(i:j) = zaxis(1:nz)
+         i = j; j = j + nr - 1
+         R_wall_temp(i:j) = raxis(nr:1:-1)
+         Z_wall_temp(i:j) = zaxis(nz)
+         i = j; j = j + nz - 2 ! short by one index
+         R_wall_temp(i:j) = raxis(1)
+         Z_wall_temp(i:j) = zaxis(nz:2:-1)
+         j = nphi*NINT(pi2/phimax)
+         CALL wall_load_seg(k,R_wall_temp,Z_wall_temp,j,ier,VERB=.FALSE.,COMM=MPI_COMM_SHARMEM)
+
       END IF
 
       !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
