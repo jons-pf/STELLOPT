@@ -58,61 +58,45 @@
 !     doubles so it seems like that would be an option.
       ier      = 0
       r_temp   = q(1)
-      phi_temp = MOD(q(2), phimax)
-      IF (phi_temp < 0) phi_temp = phi_temp + phimax
+      phi_temp = MODULO(q(2), phimax)
       z_temp   = q(3)
       rinv = one/r_temp
-!      CALL EZspline_isInDomain(BR_spl,r_temp,phi_temp,z_temp,ier)
-      IF ((r_temp >= rmin-eps1) .and. (r_temp <= rmax+eps1) .and. &
-          (phi_temp >= phimin-eps2) .and. (phi_temp <= phimax+eps2) .and. &
-          (z_temp >= zmin-eps3) .and. (z_temp <= zmax+eps3)) THEN
-!      IF (ier == 0) THEN
-         ! Get the gridpoint info
-         i = MIN(MAX(COUNT(raxis < r_temp),1),nr-1)
-         j = MIN(MAX(COUNT(phiaxis < phi_temp),1),nphi-1)
-         k = MIN(MAX(COUNT(zaxis < z_temp),1),nz-1)
-         xparam = (r_temp - raxis(i)) * hri(i)
-         yparam = (phi_temp - phiaxis(j)) * hpi(j)
-         zparam = (z_temp - zaxis(k)) * hzi(k)
-         !CALL R8HERM3xyz(r_temp,phi_temp,z_temp,&
-         !                BR_spl%x1(1),BR_spl%n1,&
-         !                BR_spl%x2(1),BR_spl%n2,&
-         !                BR_spl%x3(1),BR_spl%n3,&
-         !                BR_spl%ilin1,BR_spl%ilin2,BR_spl%ilin3,&
-         !                i,j,k,xparam,yparam,zparam,&
-         !                hx,hxi,hy,hyi,hz,hzi,ier)
-         ! Evaluate the Splines
-         CALL R8HERM3FCN(ict,1,1,fval,i,j,k,xparam,yparam,zparam,&
-                         hr(i),hri(i),hp(j),hpi(j),hz(k),hzi(k),&
-                         BR4D(1,1,1,1),nr,nphi,nz)
-         br_temp = fval(1,1)
-         CALL R8HERM3FCN(ict,1,1,fval,i,j,k,xparam,yparam,zparam,&
-                         hr(i),hri(i),hp(j),hpi(j),hz(k),hzi(k),&
-                         BPHI4D(1,1,1,1),nr,nphi,nz)
-         bphi_temp = fval(1,1)
-         CALL R8HERM3FCN(ict,1,1,fval,i,j,k,xparam,yparam,zparam,&
-                         hr(i),hri(i),hp(j),hpi(j),hz(k),hzi(k),&
-                         BZ4D(1,1,1,1),nr,nphi,nz)
-         bz_temp = fval(1,1)
-         CALL R8HERM3FCN(ictE,1,1,fvalE,i,j,k,xparam,yparam,zparam,&
-                         hr(i),hri(i),hp(j),hpi(j),hz(k),hzi(k),&
-                         POT4D(1,1,1,1),nr,nphi,nz)
-         Efield(1:3) =-fvalE(1,1:3)
-         ! Fix gradients
-         Efield(2)   = Efield(2)*rinv
-         ! VxB
-         VxB(1) = q(5)*bz_temp   - q(6)*bphi_temp
-         VxB(2) = q(6)*br_temp   - q(4)*bz_temp
-         VxB(3) = q(4)*bphi_temp - q(5)*br_temp
-         ! Equations
-         qdot(1:3) = q(4:6)
-         qdot(4:6) = mycharge*(Efield(1:3)-VxB)/mymass
+      ! Get the gridpoint info
+      i = MIN(MAX(COUNT(raxis < r_temp),1),nr-1)
+      j = MIN(MAX(COUNT(phiaxis < phi_temp),1),nphi-1)
+      k = MIN(MAX(COUNT(zaxis < z_temp),1),nz-1)
+      xparam = (r_temp - raxis(i)) * hri(i)
+      yparam = (phi_temp - phiaxis(j)) * hpi(j)
+      zparam = (z_temp - zaxis(k)) * hzi(k)
+      ! Evaluate the Splines
+      CALL R8HERM3FCN(ict,1,1,fval,i,j,k,xparam,yparam,zparam,&
+                      hr(i),hri(i),hp(j),hpi(j),hz(k),hzi(k),&
+                      BR4D(1,1,1,1),nr,nphi,nz)
+      br_temp = fval(1,1)
+      CALL R8HERM3FCN(ict,1,1,fval,i,j,k,xparam,yparam,zparam,&
+                      hr(i),hri(i),hp(j),hpi(j),hz(k),hzi(k),&
+                      BPHI4D(1,1,1,1),nr,nphi,nz)
+      bphi_temp = fval(1,1)
+      CALL R8HERM3FCN(ict,1,1,fval,i,j,k,xparam,yparam,zparam,&
+                      hr(i),hri(i),hp(j),hpi(j),hz(k),hzi(k),&
+                      BZ4D(1,1,1,1),nr,nphi,nz)
+      bz_temp = fval(1,1)
+      CALL R8HERM3FCN(ictE,1,1,fvalE,i,j,k,xparam,yparam,zparam,&
+                      hr(i),hri(i),hp(j),hpi(j),hz(k),hzi(k),&
+                      POT4D(1,1,1,1),nr,nphi,nz)
+      Efield(1:3) =-fvalE(1,1:3)
+      ! Fix gradients
+      Efield(2)   = Efield(2)*rinv
+      ! VxB
+      VxB(1) = q(5)*bz_temp   - q(6)*bphi_temp
+      VxB(2) = q(6)*br_temp   - q(4)*bz_temp
+      VxB(3) = q(4)*bphi_temp - q(5)*br_temp
+      ! Equations
+      qdot(1:3) = q(4:6)
+      qdot(4:6) = mycharge*(Efield(1:3)-VxB)/mymass
 
-         qdot(2) = qdot(2)*rinv
-         qdot(5) = qdot(5)*rinv
-      ELSE
-         qdot(1:6) = 0
-      END IF
+      qdot(2) = qdot(2)*rinv
+      qdot(5) = qdot(5)*rinv
       
       RETURN
 !-----------------------------------------------------------------------

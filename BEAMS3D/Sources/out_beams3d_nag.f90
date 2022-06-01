@@ -59,64 +59,51 @@ SUBROUTINE out_beams3d_nag(t, q)
     vll_lines(mytdex, myline)    = q(4)
     moment_lines(mytdex, myline) = moment
     neut_lines(mytdex,myline)     = lneut
-    x0 = MOD(q(2), phimax)
-    IF (x0 < 0) x0 = x0 + phimax
-    !CALL EZspline_isInDomain(S_spl,q(1),x0,q(3),ier)
-    y0 = 0  ! If we're out of domain then don't worry about collisions
-    !IF (ier==0) THEN
-    IF ((q(1) >= rmin-eps1) .and. (q(1) <= rmax+eps1) .and. &
-        (x0 >= phimin-eps2) .and. (x0 <= phimax+eps2) .and. &
-        (q(3) >= zmin-eps3) .and. (q(3) <= zmax+eps3)) THEN
-       i = MIN(MAX(COUNT(raxis < q(1)),1),nr-1)
-       j = MIN(MAX(COUNT(phiaxis < x0),1),nphi-1)
-       k = MIN(MAX(COUNT(zaxis < q(3)),1),nz-1)
-       xparam = (q(1) - raxis(i)) * hri(i)
-       yparam = (x0 - phiaxis(j)) * hpi(j)
-       zparam = (q(3) - zaxis(k)) * hzi(k)
-       CALL R8HERM3FCN(ict,1,1,fval,i,j,k,xparam,yparam,zparam,&
-                       hr(i),hri(i),hp(j),hpi(j),hz(k),hzi(k),&
-                       X4D(1,1,1,1),nr,nphi,nz)
-       !y0 = fval(1)
-       
-       CALL R8HERM3FCN(ict,1,1,fval2,i,j,k,xparam,yparam,zparam,&
-                       hr(i),hri(i),hp(j),hpi(j),hz(k),hzi(k),&
-                       Y4D(1,1,1,1),nr,nphi,nz)
-
-      y0 = SQRT(fval(1)*fval(1) + fval2(1) * fval2(1))
-      !z0 = fval(1)
-      z0 = ATAN2(fval2(1),fval(1))
-      S_lines(mytdex, myline) = y0 
-      U_lines(mytdex, myline) = z0
-       CALL R8HERM3FCN(ict,1,1,fval,i,j,k,xparam,yparam,zparam,&
-                       hr(i),hri(i),hp(j),hpi(j),hz(k),hzi(k),&
-                       MODB4D(1,1,1,1),nr,nphi,nz)
-       B_lines(mytdex, myline) = fval(1)
-       ! Calc dist func bins
-       x0    = MOD(q(2),pi2)
-       IF (x0 < 0) x0 = x0 + pi2
-       IF (z0 < 0) z0 = z0 + pi2
-       vperp = SQRT(2*moment*fval(1)/mymass)
-       d1 = MAX(MIN(CEILING(SQRT(y0)*ns_prof1     ), ns_prof1), 1) ! Rho Bin
-       d2 = MAX(MIN(CEILING( z0*h2_prof           ), ns_prof2), 1) ! U Bin
-       d3 = MAX(MIN(CEILING( x0*h3_prof           ), ns_prof3), 1) ! V Bin
-       d4 = MAX(MIN(1+nsh_prof4+FLOOR(h4_prof*q(4)), ns_prof4), 1) ! vll
-       d5 = MAX(MIN(CEILING(vperp*h5_prof         ), ns_prof5), 1) ! Vperp
-       xw = weight(myline)*dt
-       !CALL MPI_WIN_LOCK(MPI_LOCK_EXCLUSIVE,myworkid,0,win_dist5d,ier)
-       dist5d_prof(mybeam,d1,d2,d3,d4,d5) = dist5d_prof(mybeam,d1,d2,d3,d4,d5) + xw
-      !  IF (lfidasim)
-      !    dist5d_fida(mybeam,i,j,k,d4,d5) = dist5d_fida(mybeam,i,j,k,d4,d5) + xw !This shouldnt slow down the code, but perhaps increase the memory usage
-      !  END IF
-       !CALL MPI_WIN_UNLOCK(myworkid,win_dist5d,ier)
-       IF (lcollision) CALL beams3d_physics(t,q)
-       IF (ltherm) THEN
-          ndot_prof(mybeam,d1)   =   ndot_prof(mybeam,d1) + weight(myline)
-          end_state(myline) = 1
-          t = my_end
-       END IF
-    ELSE
-       IF (lneut) end_state(myline)=3
+    x0 = MODULO(q(2),phimax)
+    ! Interpolate
+    i = MIN(MAX(COUNT(raxis < q(1)),1),nr-1)
+    j = MIN(MAX(COUNT(phiaxis < x0),1),nphi-1)
+    k = MIN(MAX(COUNT(zaxis < q(3)),1),nz-1)
+    xparam = (q(1) - raxis(i)) * hri(i)
+    yparam = (x0 - phiaxis(j)) * hpi(j)
+    zparam = (q(3) - zaxis(k)) * hzi(k)
+    CALL R8HERM3FCN(ict,1,1,fval,i,j,k,xparam,yparam,zparam,&
+                    hr(i),hri(i),hp(j),hpi(j),hz(k),hzi(k),&
+                    X4D(1,1,1,1),nr,nphi,nz)
+    CALL R8HERM3FCN(ict,1,1,fval2,i,j,k,xparam,yparam,zparam,&
+                    hr(i),hri(i),hp(j),hpi(j),hz(k),hzi(k),&
+                    Y4D(1,1,1,1),nr,nphi,nz)
+    y0 = SQRT(fval(1)*fval(1) + fval2(1) * fval2(1))
+    z0 = ATAN2(fval2(1),fval(1))
+    S_lines(mytdex, myline) = y0 
+    U_lines(mytdex, myline) = z0
+    CALL R8HERM3FCN(ict,1,1,fval,i,j,k,xparam,yparam,zparam,&
+                    hr(i),hri(i),hp(j),hpi(j),hz(k),hzi(k),&
+                    MODB4D(1,1,1,1),nr,nphi,nz)
+    B_lines(mytdex, myline) = fval(1)
+    ! Calc dist func bins
+    x0    = MODULO(q(2),pi2)
+    IF (z0 < 0) z0 = z0 + pi2
+    vperp = SQRT(2*moment*fval(1)/mymass)
+    d1 = MAX(MIN(CEILING(SQRT(y0)*ns_prof1     ), ns_prof1), 1) ! Rho Bin
+    d2 = MAX(MIN(CEILING( z0*h2_prof           ), ns_prof2), 1) ! U Bin
+    d3 = MAX(MIN(CEILING( x0*h3_prof           ), ns_prof3), 1) ! V Bin
+    d4 = MAX(MIN(1+nsh_prof4+FLOOR(h4_prof*q(4)), ns_prof4), 1) ! vll
+    d5 = MAX(MIN(CEILING(vperp*h5_prof         ), ns_prof5), 1) ! Vperp
+    xw = weight(myline)*dt
+    !CALL MPI_WIN_LOCK(MPI_LOCK_EXCLUSIVE,myworkid,0,win_dist5d,ier)
+    dist5d_prof(mybeam,d1,d2,d3,d4,d5) = dist5d_prof(mybeam,d1,d2,d3,d4,d5) + xw
+    !  IF (lfidasim)
+    !    dist5d_fida(mybeam,i,j,k,d4,d5) = dist5d_fida(mybeam,i,j,k,d4,d5) + xw !This shouldnt slow down the code, but perhaps increase the memory usage
+    !  END IF
+    !CALL MPI_WIN_UNLOCK(myworkid,win_dist5d,ier)
+    IF (lcollision) CALL beams3d_physics(t,q)
+    IF (ltherm) THEN
+       ndot_prof(mybeam,d1)   =   ndot_prof(mybeam,d1) + weight(myline)
+       end_state(myline) = 1
+       t = my_end
     END IF
+    
     IF (lvessel .and. mytdex > 0 .and. y0 > 0.5) THEN
        lhit = .false.
        x0    = xlast

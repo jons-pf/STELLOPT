@@ -108,7 +108,7 @@ MODULE beams3d_physics_mod
          ! Setup position in a vll arrays
          r_temp   = q(1)
          phi_temp = MODULO(q(2), phimax)
-         IF (phi_temp < 0) phi_temp = phi_temp + phimax
+         !IF (phi_temp < 0) phi_temp = phi_temp + phimax
          z_temp   = q(3)
          vll      = q(4)
 
@@ -119,155 +119,141 @@ MODULE beams3d_physics_mod
          tau_spit_inv = 0.0; v_crit   = 0.0; coulomb_log = 15
          tau_inv = 10.0; vcrit_cube = 0.0; vc3_tauinv = 0
 
-         ! Check that we're inside the domain then proceed
-         !CALL EZspline_isInDomain(BR_spl,r_temp,phi_temp,z_temp,ier)
-         IF ((r_temp >= rmin-eps1) .and. (r_temp <= rmax+eps1) .and. &
-             (phi_temp >= phimin-eps2) .and. (phi_temp <= phimax+eps2) .and. &
-             (z_temp >= zmin-eps3) .and. (z_temp <= zmax+eps3)) THEN
-!         IF (ier == 0) THEN
-            ! Get the gridpoint info (this is possible since all grids are the same)
-            i = MIN(MAX(COUNT(raxis < r_temp),1),nr-1)
-            j = MIN(MAX(COUNT(phiaxis < phi_temp),1),nphi-1)
-            k = MIN(MAX(COUNT(zaxis < z_temp),1),nz-1)
-            xparam = (r_temp - raxis(i)) * hri(i)
-            yparam = (phi_temp - phiaxis(j)) * hpi(j)
-            zparam = (z_temp - zaxis(k)) * hzi(k)
-            ! Evaluate the Splines
-            CALL R8HERM3FCN(ict,1,1,fval,i,j,k,xparam,yparam,zparam,&
-                            hr(i),hri(i),hp(j),hpi(j),hz(k),hzi(k),&
-                            MODB4D(1,1,1,1),nr,nphi,nz)
-            modb = fval(1)
-            CALL R8HERM3FCN(ict,1,1,fval,i,j,k,xparam,yparam,zparam,&
-                            hr(i),hri(i),hp(j),hpi(j),hz(k),hzi(k),&
-                            TE4D(1,1,1,1),nr,nphi,nz)
-            te_temp = max(fval(1),zero)
-            CALL R8HERM3FCN(ict,1,1,fval,i,j,k,xparam,yparam,zparam,&
-                            hr(i),hri(i),hp(j),hpi(j),hz(k),hzi(k),&
-                            NE4D(1,1,1,1),nr,nphi,nz)
-            ne_temp = max(fval(1),zero)
-            CALL R8HERM3FCN(ict,1,1,fval,i,j,k,xparam,yparam,zparam,&
-                            hr(i),hri(i),hp(j),hpi(j),hz(k),hzi(k),&
-                            TI4D(1,1,1,1),nr,nphi,nz)
-            ti_temp = max(fval(1),zero)
-            CALL R8HERM3FCN(ict,1,1,fval,i,j,k,xparam,yparam,zparam,&
-                            hr(i),hri(i),hp(j),hpi(j),hz(k),hzi(k),&
-                            ZEFF4D(1,1,1,1),nr,nphi,nz)
-            zeff_temp = max(fval(1),one)
-            CALL R8HERM3FCN(ict,1,1,fval,i,j,k,xparam,yparam,zparam,&
-                            hr(i),hri(i),hp(j),hpi(j),hz(k),hzi(k),&
-                            S4D(1,1,1,1),nr,nphi,nz)
-            s_temp = fval(1)
+         ! Get the gridpoint info (this is possible since all grids are the same)
+         i = MIN(MAX(COUNT(raxis < r_temp),1),nr-1)
+         j = MIN(MAX(COUNT(phiaxis < phi_temp),1),nphi-1)
+         k = MIN(MAX(COUNT(zaxis < z_temp),1),nz-1)
+         xparam = (r_temp - raxis(i)) * hri(i)
+         yparam = (phi_temp - phiaxis(j)) * hpi(j)
+         zparam = (z_temp - zaxis(k)) * hzi(k)
+         ! Evaluate the Splines
+         CALL R8HERM3FCN(ict,1,1,fval,i,j,k,xparam,yparam,zparam,&
+                         hr(i),hri(i),hp(j),hpi(j),hz(k),hzi(k),&
+                         MODB4D(1,1,1,1),nr,nphi,nz)
+         modb = fval(1)
+         CALL R8HERM3FCN(ict,1,1,fval,i,j,k,xparam,yparam,zparam,&
+                         hr(i),hri(i),hp(j),hpi(j),hz(k),hzi(k),&
+                         TE4D(1,1,1,1),nr,nphi,nz)
+         te_temp = max(fval(1),zero)
+         CALL R8HERM3FCN(ict,1,1,fval,i,j,k,xparam,yparam,zparam,&
+                        hr(i),hri(i),hp(j),hpi(j),hz(k),hzi(k),&
+                        NE4D(1,1,1,1),nr,nphi,nz)
+         ne_temp = max(fval(1),zero)
+         CALL R8HERM3FCN(ict,1,1,fval,i,j,k,xparam,yparam,zparam,&
+                         hr(i),hri(i),hp(j),hpi(j),hz(k),hzi(k),&
+                         TI4D(1,1,1,1),nr,nphi,nz)
+         ti_temp = max(fval(1),zero)
+         CALL R8HERM3FCN(ict,1,1,fval,i,j,k,xparam,yparam,zparam,&
+                         hr(i),hri(i),hp(j),hpi(j),hz(k),hzi(k),&
+                         ZEFF4D(1,1,1,1),nr,nphi,nz)
+         zeff_temp = max(fval(1),one)
+         CALL R8HERM3FCN(ict,1,1,fval,i,j,k,xparam,yparam,zparam,&
+                         hr(i),hri(i),hp(j),hpi(j),hz(k),hzi(k),&
+                         S4D(1,1,1,1),nr,nphi,nz)
+         s_temp = fval(1)
 
-            !-----------------------------------------------------------
-            !  Helpers
-            !     v_s       Local Sound Speed
-            !     speed     Total particle speed
-            !-----------------------------------------------------------
-            te_cube = te_temp * te_temp * te_temp
-            inv_mymass = 1/mymass
-            v_s = fact_vsound*sqrt(ti_temp)
-            speed = sqrt( vll*vll + 2*moment*modb*inv_mymass )
-            vbeta = max(ABS(speed-v_s)*inv_cspeed,1E-6)
+         !-----------------------------------------------------------
+         !  Helpers
+         !     v_s       Local Sound Speed
+         !     speed     Total particle speed
+         !-----------------------------------------------------------
+         te_cube = te_temp * te_temp * te_temp
+         inv_mymass = 1/mymass
+         v_s = fact_vsound*sqrt(ti_temp)
+         speed = sqrt( vll*vll + 2*moment*modb*inv_mymass )
+         vbeta = max(ABS(speed-v_s)*inv_cspeed,1E-6)
 
-            !-----------------------------------------------------------
-            !  Calculate Coulomb Logarithm (NRL pg. 35)
-            !     te in eV and ne in cm^-3
-            !-----------------------------------------------------------
-            IF ((te_temp > te_col_min).and.(ne_temp > 0)) THEN
-               coulomb_log = 35 - log( zeff_temp*fact_coul*sqrt(ne_temp*1E-6/te_temp)/(vbeta*vbeta))
-!               IF (te_temp < 10*myZ*myZ) THEN
-!                  coulomb_log = 23 - log( myZ*sqrt(ne_temp*1E-6/(te_cube) )   )
-!               ELSE
-!                  coulomb_log = 24 - log( sqrt(ne_temp*1E-6)/(te_temp) )
-!               END IF
-               coulomb_log = max(coulomb_log,one)
-               ! Callen Ch2 pg41 eq2.135 (fact*Vtherm; Vtherm = SQRT(2*E/mass) so E in J not eV)
-               v_crit = fact_crit*SQRT(te_temp)
-               vcrit_cube = v_crit*v_crit*v_crit
-               tau_spit = 3.777183D41*mymass*SQRT(te_cube)/(ne_temp*myZ*myZ*coulomb_log)  ! note ne should be in m^-3 here
-               tau_spit_inv = (1.0D0)/tau_spit
-               vc3_tauinv = vcrit_cube*tau_spit_inv
-            END IF
+         !-----------------------------------------------------------
+         !  Calculate Coulomb Logarithm (NRL pg. 35)
+         !     te in eV and ne in cm^-3
+         !-----------------------------------------------------------
+         IF ((te_temp > te_col_min).and.(ne_temp > 0)) THEN
+            coulomb_log = 35 - log( zeff_temp*fact_coul*sqrt(ne_temp*1E-6/te_temp)/(vbeta*vbeta))
+            coulomb_log = max(coulomb_log,one)
+            ! Callen Ch2 pg41 eq2.135 (fact*Vtherm; Vtherm = SQRT(2*E/mass) so E in J not eV)
+            v_crit = fact_crit*SQRT(te_temp)
+            vcrit_cube = v_crit*v_crit*v_crit
+            tau_spit = 3.777183D41*mymass*SQRT(te_cube)/(ne_temp*myZ*myZ*coulomb_log)  ! note ne should be in m^-3 here
+            tau_spit_inv = (1.0D0)/tau_spit
+            vc3_tauinv = vcrit_cube*tau_spit_inv
+         END IF
 
-            !-----------------------------------------------------------
-            !  Viscouse Velocity Reduction
-            !     v_s       Local Sound Speed
-            !     speed     Total particle speed
-            !     dve       Speed change due to electron slowing down 
-            !     dvi       Speed change due to ion slowing down 
-            !     reduction Total change in speed
-            !     newspeed  New total speed
-            !     vfrac     Ratio between new and old speed (helper) 
-            !-----------------------------------------------------------
-            dve   = speed*tau_spit_inv
-            dvi   = vc3_tauinv/(speed*speed)
-            reduction = dve + dvi
+         !-----------------------------------------------------------
+         !  Viscouse Velocity Reduction
+         !     v_s       Local Sound Speed
+         !     speed     Total particle speed
+         !     dve       Speed change due to electron slowing down 
+         !     dvi       Speed change due to ion slowing down 
+         !     reduction Total change in speed
+         !     newspeed  New total speed
+         !     vfrac     Ratio between new and old speed (helper) 
+         !-----------------------------------------------------------
+         dve   = speed*tau_spit_inv
+         dvi   = vc3_tauinv/(speed*speed)
+         reduction = dve + dvi
+         newspeed = speed - reduction*dt
+         vfrac = newspeed/speed 
+
+         !-----------------------------------------------------------
+         !  Thermalize particle or adjust vll and moment
+         !  Fowler et al. NF 1990 30 (6) 997--1010
+         !-----------------------------------------------------------
+         IF (newspeed < v_s) THEN  ! Thermalize
+            dve       = dve/reduction
+            dvi       = dvi/reduction
+            reduction = (speed - v_s)/dt  ! Thermalize
+            dve       = dve*reduction
+            dvi       = dvi*reduction
             newspeed = speed - reduction*dt
+            ltherm = .true.
             vfrac = newspeed/speed
-
-            !-----------------------------------------------------------
-            !  Thermalize particle or adjust vll and moment
-            !  Fowler et al. NF 1990 30 (6) 997--1010
-            !-----------------------------------------------------------
-            IF (newspeed < v_s) THEN  ! Thermalize
-               dve       = dve/reduction
-               dvi       = dvi/reduction
-               reduction = (speed - v_s)/dt  ! Thermalize
-               dve       = dve*reduction
-               dvi       = dvi*reduction
-               newspeed = speed - reduction*dt
-               ltherm = .true.
-               vfrac = newspeed/speed
-               vll = vfrac*vll
-               moment = vfrac*vfrac*moment
-               q(4) = vll
-               RETURN
-            END IF
-            l = MAX(MIN(CEILING(SQRT(s_temp)*ns_prof1),ns_prof1),1)
-            epower_prof(mybeam,l) = epower_prof(mybeam,l) + mymass*dve*dt*speed*weight(myline)
-            ipower_prof(mybeam,l) = ipower_prof(mybeam,l) + mymass*dvi*dt*speed*weight(myline)
             vll = vfrac*vll
             moment = vfrac*vfrac*moment
-            speed = newspeed
-
-           !------------------------------------------------------------
-           !  Pitch Angle Scattering
-           !------------------------------------------------------------
-           speed_cube = 2*vc3_tauinv*zeff_temp*fact_pa*dt/(speed*speed*speed) ! redefine as inverse
-           zeta_o = vll/speed   ! Record the current pitch.
-           CALL gauss_rand(1,zeta)  ! A random from a standard normal (1,1)
-           sigma = sqrt( ABS((1.0D0-zeta_o*zeta_o)*speed_cube) ) ! The standard deviation.
-           zeta_mean = zeta_o *(1.0D0 - speed_cube )  ! The new mean in the distribution.
-           zeta = zeta*sigma + zeta_mean  ! The new pitch angle.
-           !!!The pitch angle MUST NOT go outside [-1,1] nor be NaN; but could happen accidentally with the distribution.
-           zeta = MIN(MAX(zeta,-0.999D+00),0.999D+00)
-           !IF (ABS(zeta) >  0.999D+00) zeta =  SIGN(0.999D+00,zeta)
-           vll = zeta*speed
-
-           !------------------------------------------------------------
-           !  Kick Model Scattering (old)
-           !------------------------------------------------------------
-           !IF (modb>=B_kick_min .and. modb<=B_kick_max) THEN
-           !   zeta_o = vll/speed   ! Record the current pitch.
-           !   zeta = zeta_o-zeta_o*(one-zeta_o*zeta_o)*dt*fact_kick*SQRT(ne_temp)/(modb*modb)
-           !   vll = zeta*speed
-           !END IF
-
-           !------------------------------------------------------------
-           !  Kick Model Scattering (new Energy, vll constant)
-           !------------------------------------------------------------
-           IF (modb>=B_kick_min .and. modb<=B_kick_max) THEN
-              zeta_o = vll/speed   ! Record the current pitch.
-              speed = SQRT(speed*speed + fact_kick*(1-zeta_o*zeta_o)*dt/modb)
-           END IF
-
-           !------------------------------------------------------------
-           !  Final Moment and vll update (return q(4))
-           !------------------------------------------------------------
-           moment = half*mymass*(speed*speed - vll*vll)/modb
-           q(4) = vll
-
+            q(4) = vll
+            RETURN
          END IF
+         l = MAX(MIN(CEILING(SQRT(s_temp)*ns_prof1),ns_prof1),1)
+         epower_prof(mybeam,l) = epower_prof(mybeam,l) + mymass*dve*dt*speed*weight(myline)
+         ipower_prof(mybeam,l) = ipower_prof(mybeam,l) + mymass*dvi*dt*speed*weight(myline)
+         vll = vfrac*vll
+         moment = vfrac*vfrac*moment
+         speed = newspeed
+
+         !------------------------------------------------------------
+         !  Pitch Angle Scattering
+         !------------------------------------------------------------
+         speed_cube = 2*vc3_tauinv*zeff_temp*fact_pa*dt/(speed*speed*speed) ! redefine as inverse
+         zeta_o = vll/speed   ! Record the current pitch.
+         CALL gauss_rand(1,zeta)  ! A random from a standard normal (1,1)
+         sigma = sqrt( ABS((1.0D0-zeta_o*zeta_o)*speed_cube) ) ! The standard deviation.
+         zeta_mean = zeta_o *(1.0D0 - speed_cube )  ! The new mean in the distribution.
+         zeta = zeta*sigma + zeta_mean  ! The new pitch angle.
+         !!!The pitch angle MUST NOT go outside [-1,1] nor be NaN; but could happen accidentally with the distribution.
+         zeta = MIN(MAX(zeta,-0.999D+00),0.999D+00)
+         vll = zeta*speed
+
+         !------------------------------------------------------------
+         !  Kick Model Scattering (old)
+         !------------------------------------------------------------
+         !IF (modb>=B_kick_min .and. modb<=B_kick_max) THEN
+         !   zeta_o = vll/speed   ! Record the current pitch.
+         !   zeta = zeta_o-zeta_o*(one-zeta_o*zeta_o)*dt*fact_kick*SQRT(ne_temp)/(modb*modb)
+         !   vll = zeta*speed
+         !END IF
+
+         !------------------------------------------------------------
+         !  Kick Model Scattering (new Energy, vll constant)
+         !------------------------------------------------------------
+         IF (modb>=B_kick_min .and. modb<=B_kick_max) THEN
+            zeta_o = vll/speed   ! Record the current pitch.
+            speed = SQRT(speed*speed + fact_kick*(1-zeta_o*zeta_o)*dt/modb)
+         END IF
+
+         !------------------------------------------------------------
+         !  Final Moment and vll update (return q(4))
+         !------------------------------------------------------------
+         moment = half*mymass*(speed*speed - vll*vll)/modb
+         q(4) = vll
 
          RETURN
 
@@ -340,8 +326,6 @@ MODULE beams3d_physics_mod
          ! Vll = V_neut (doesn't change durring neutral integration)
          ! energy in kJ
          energy = half*mymass*q(4)*q(4)*1D-3
-         ! energy in keV (correct for Suzuki)
-         !energy = half*mymass*q(4)*q(4)*1D-3/e_charge 
          
          qf(1) = q(1)*cos(q(2))
          qf(2) = q(1)*sin(q(2))
@@ -364,26 +348,18 @@ MODULE beams3d_physics_mod
                q(3) = qf(3)
                t = t + dt_local
                phi_temp = MODULO(q(2), phimax)
-               IF (phi_temp < 0) phi_temp = phi_temp + phimax
-               !CALL EZspline_isInDomain(S_spl,q(1),phi_temp,q(3),ier)
-               !IF (ier==0) THEN
-               IF ((q(1) >= rmin-eps1) .and. (q(1) <= rmax+eps1) .and. &
-                   (phi_temp >= phimin-eps2) .and. (phi_temp <= phimax+eps2) .and. &
-                   (q(3) >= zmin-eps3) .and. (q(3) <= zmax+eps3)) THEN
-                  i = MIN(MAX(COUNT(raxis < q(1)),1),nr-1)
-                  j = MIN(MAX(COUNT(phiaxis < phi_temp),1),nphi-1)
-                  k = MIN(MAX(COUNT(zaxis < q(3)),1),nz-1)
-                  xparam = (q(1) - raxis(i)) * hri(i)
-                  yparam = (phi_temp - phiaxis(j)) * hpi(j)
-                  zparam = (q(3) - zaxis(k)) * hzi(k)
-                  s_temp =1.5
-                  !CALL EZspline_interp(S_spl,q(1),phi_temp,q(3),s_temp,ier)
-                  CALL R8HERM3FCN(ict,1,1,fval,i,j,k,xparam,yparam,zparam,&
-                                  hr(i),hri(i),hp(j),hpi(j),hz(k),hzi(k),&
-                                  S4D(1,1,1,1),nr,nphi,nz)
-                  s_temp = fval(1)
-                  IF (s_temp < one) EXIT
-               END IF
+               i = MIN(MAX(COUNT(raxis < q(1)),1),nr-1)
+               j = MIN(MAX(COUNT(phiaxis < phi_temp),1),nphi-1)
+               k = MIN(MAX(COUNT(zaxis < q(3)),1),nz-1)
+               xparam = (q(1) - raxis(i)) * hri(i)
+               yparam = (phi_temp - phiaxis(j)) * hpi(j)
+               zparam = (q(3) - zaxis(k)) * hzi(k)
+               s_temp =1.5
+               CALL R8HERM3FCN(ict,1,1,fval,i,j,k,xparam,yparam,zparam,&
+                               hr(i),hri(i),hp(j),hpi(j),hz(k),hzi(k),&
+                               S4D(1,1,1,1),nr,nphi,nz)
+               s_temp = fval(1)
+               IF (s_temp < one) EXIT
                IF ((q(1) > 5*rmax)  .or. (q(1) < rmin)) THEN
                   t = my_end+dt_local
                   RETURN
@@ -425,25 +401,17 @@ MODULE beams3d_physics_mod
                q(2) = ATAN2(qf(2),qf(1))
                q(3) = qf(3)
                phi_temp = MODULO(q(2), phimax)
-               IF (phi_temp < 0) phi_temp = phi_temp + phimax
-               ! Assume we're in grid and only want to bug out if we're outside the grid
-               IF ((q(1) >= rmin-eps1) .and. (q(1) <= rmax+eps1) .and. &
-                   (phi_temp >= phimin-eps2) .and. (phi_temp <= phimax+eps2) .and. &
-                   (q(3) >= zmin-eps3) .and. (q(3) <= zmax+eps3)) THEN
-                  i = MIN(MAX(COUNT(raxis < q(1)),1),nr-1)
-                  j = MIN(MAX(COUNT(phiaxis < phi_temp),1),nphi-1)
-                  k = MIN(MAX(COUNT(zaxis < q(3)),1),nz-1)
-                  xparam = (q(1) - raxis(i)) * hri(i)
-                  yparam = (phi_temp - phiaxis(j)) * hpi(j)
-                  zparam = (q(3) - zaxis(k)) * hzi(k)
-                  CALL R8HERM3FCN(ict,1,1,fval,i,j,k,xparam,yparam,zparam,&
-                                  hr(i),hri(i),hp(j),hpi(j),hz(k),hzi(k),&
-                                  S4D(1,1,1,1),nr,nphi,nz)
-                  s_temp = fval(1)
-                  IF (s_temp > one) EXIT INNER
-               ELSE
-                  EXIT INNER
-               END IF
+               i = MIN(MAX(COUNT(raxis < q(1)),1),nr-1)
+               j = MIN(MAX(COUNT(phiaxis < phi_temp),1),nphi-1)
+               k = MIN(MAX(COUNT(zaxis < q(3)),1),nz-1)
+               xparam = (q(1) - raxis(i)) * hri(i)
+               yparam = (phi_temp - phiaxis(j)) * hpi(j)
+               zparam = (q(3) - zaxis(k)) * hzi(k)
+               CALL R8HERM3FCN(ict,1,1,fval,i,j,k,xparam,yparam,zparam,&
+                               hr(i),hri(i),hp(j),hpi(j),hz(k),hzi(k),&
+                               S4D(1,1,1,1),nr,nphi,nz)
+               s_temp = fval(1)
+               IF (s_temp > one) EXIT INNER
             END DO INNER
             ! Take a step back
             qf = qf - myv_neut*dt_local
@@ -609,7 +577,6 @@ MODULE beams3d_physics_mod
                CALL uncount_wall_hit
                RETURN
             END IF
-            !xlast = x0; ylast=y0; zlast=z0
             x0 = qf(1); y0 = qf(2); z0 = qf(3)
             q(1) = SQRT(qf(1)*qf(1)+qf(2)*qf(2))
             q(2) = ATAN2(qf(2),qf(1))
@@ -668,8 +635,7 @@ MODULE beams3d_physics_mod
 
          ! Handle inputs
          ier = 0
-         phi_temp = MOD(q(2),phimax)
-         IF (phi_temp < 0) phi_temp = phi_temp + phimax
+         phi_temp = MODULO(q(2),phimax)
          r_temp = q(1)
          z_temp = q(3)
 
@@ -821,8 +787,7 @@ MODULE beams3d_physics_mod
          !     Begin Subroutine
          !--------------------------------------------------------------
          ier = 0
-         phi_temp = MOD(q(2),phimax)
-         IF (phi_temp < zero) phi_temp = phi_temp + phimax
+         phi_temp = MODULO(q(2),phimax)
          r_temp = q(1)
          z_temp = q(3)
 
@@ -929,39 +894,33 @@ MODULE beams3d_physics_mod
          ! Setup position in a vll arrays
          r_temp   = q(1)
          phi_temp = MODULO(q(2), phimax)
-         IF (phi_temp < 0) phi_temp = phi_temp + phimax
+         !IF (phi_temp < 0) phi_temp = phi_temp + phimax
          z_temp   = q(3)
 
          ! Initialize values
          ti_temp = 0; nd_temp = 0; nt_temp = 0; reactrate = 0
 
-         ! Check that we're inside the domain then proceed
-         IF ((r_temp >= rmin-eps1) .and. (r_temp <= rmax+eps1) .and. &
-             (phi_temp >= phimin-eps2) .and. (phi_temp <= phimax+eps2) .and. &
-             (z_temp >= zmin-eps3) .and. (z_temp <= zmax+eps3)) THEN
-            i = MIN(MAX(COUNT(raxis < r_temp),1),nr-1)
-            j = MIN(MAX(COUNT(phiaxis < phi_temp),1),nphi-1)
-            k = MIN(MAX(COUNT(zaxis < z_temp),1),nz-1)
-            xparam = (r_temp - raxis(i)) * hri(i)
-            yparam = (phi_temp - phiaxis(j)) * hpi(j)
-            zparam = (z_temp - zaxis(k)) * hzi(k)
-            ! Evaluate the Splines
-            CALL R8HERM3FCN(ict,1,1,fval,i,j,k,xparam,yparam,zparam,&
-                            hr(i),hri(i),hp(j),hpi(j),hz(k),hzi(k),&
-                            TI4D(1,1,1,1),nr,nphi,nz)
-            ti_temp = max(fval(1),zero)
-            ! Assume 1 and 2 are D and T
-            CALL R8HERM3FCN(ict,1,1,fval,i,j,k,xparam,yparam,zparam,&
-                            hr(i),hri(i),hp(j),hpi(j),hz(k),hzi(k),&
-                            NI5D(1,1,1,1,1),nr,nphi,nz)
-            nd_temp = max(fval(1),zero)
-            CALL R8HERM3FCN(ict,1,1,fval,i,j,k,xparam,yparam,zparam,&
-                            hr(i),hri(i),hp(j),hpi(j),hz(k),hzi(k),&
-                            NI5D(1,1,1,1,2),nr,nphi,nz)
-            nt_temp = max(fval(1),zero)
-         ELSE
-            RETURN
-         END IF
+         ! Interpolate
+         i = MIN(MAX(COUNT(raxis < r_temp),1),nr-1)
+         j = MIN(MAX(COUNT(phiaxis < phi_temp),1),nphi-1)
+         k = MIN(MAX(COUNT(zaxis < z_temp),1),nz-1)
+         xparam = (r_temp - raxis(i)) * hri(i)
+         yparam = (phi_temp - phiaxis(j)) * hpi(j)
+         zparam = (z_temp - zaxis(k)) * hzi(k)
+         ! Evaluate the Splines
+         CALL R8HERM3FCN(ict,1,1,fval,i,j,k,xparam,yparam,zparam,&
+                         hr(i),hri(i),hp(j),hpi(j),hz(k),hzi(k),&
+                         TI4D(1,1,1,1),nr,nphi,nz)
+         ti_temp = max(fval(1),zero)
+         ! Assume 1 and 2 are D and T
+         CALL R8HERM3FCN(ict,1,1,fval,i,j,k,xparam,yparam,zparam,&
+                         hr(i),hri(i),hp(j),hpi(j),hz(k),hzi(k),&
+                         NI5D(1,1,1,1,1),nr,nphi,nz)
+         nd_temp = max(fval(1),zero)
+         CALL R8HERM3FCN(ict,1,1,fval,i,j,k,xparam,yparam,zparam,&
+                         hr(i),hri(i),hp(j),hpi(j),hz(k),hzi(k),&
+                         NI5D(1,1,1,1,2),nr,nphi,nz)
+         nt_temp = max(fval(1),zero)
          IF (ti_temp <= zero) RETURN ! Get out if ti small
          ti_temp = ti_temp*1E-3 ! to keV
          zeta =  one - ((((CARR(6)*ti_temp)+CARR(4))*ti_temp+CARR(2))*ti_temp)/ &
@@ -1032,35 +991,28 @@ MODULE beams3d_physics_mod
          ! Setup position in a vll arrays
          r_temp   = q(1)
          phi_temp = MODULO(q(2), phimax)
-         IF (phi_temp < 0) phi_temp = phi_temp + phimax
          z_temp   = q(3)
 
          ! Initialize values
          ti_temp = 0; nd_temp = 0; reactrate = 0
 
-         ! Check that we're inside the domain then proceed
-         IF ((r_temp >= rmin-eps1) .and. (r_temp <= rmax+eps1) .and. &
-             (phi_temp >= phimin-eps2) .and. (phi_temp <= phimax+eps2) .and. &
-             (z_temp >= zmin-eps3) .and. (z_temp <= zmax+eps3)) THEN
-            i = MIN(MAX(COUNT(raxis < r_temp),1),nr-1)
-            j = MIN(MAX(COUNT(phiaxis < phi_temp),1),nphi-1)
-            k = MIN(MAX(COUNT(zaxis < z_temp),1),nz-1)
-            xparam = (r_temp - raxis(i)) * hri(i)
-            yparam = (phi_temp - phiaxis(j)) * hpi(j)
-            zparam = (z_temp - zaxis(k)) * hzi(k)
-            ! Evaluate the Splines
-            CALL R8HERM3FCN(ict,1,1,fval,i,j,k,xparam,yparam,zparam,&
-                            hr(i),hri(i),hp(j),hpi(j),hz(k),hzi(k),&
-                            TI4D(1,1,1,1),nr,nphi,nz)
-            ti_temp = max(fval(1),zero)
-            ! Assume 1 and 2 are D and T
-            CALL R8HERM3FCN(ict,1,1,fval,i,j,k,xparam,yparam,zparam,&
-                            hr(i),hri(i),hp(j),hpi(j),hz(k),hzi(k),&
-                            NI5D(1,1,1,1,1),nr,nphi,nz)
-            nd_temp = max(fval(1),zero)
-         ELSE
-            RETURN
-         END IF
+         ! Interpolate
+         i = MIN(MAX(COUNT(raxis < r_temp),1),nr-1)
+         j = MIN(MAX(COUNT(phiaxis < phi_temp),1),nphi-1)
+         k = MIN(MAX(COUNT(zaxis < z_temp),1),nz-1)
+         xparam = (r_temp - raxis(i)) * hri(i)
+         yparam = (phi_temp - phiaxis(j)) * hpi(j)
+         zparam = (z_temp - zaxis(k)) * hzi(k)
+         ! Evaluate the Splines
+         CALL R8HERM3FCN(ict,1,1,fval,i,j,k,xparam,yparam,zparam,&
+                         hr(i),hri(i),hp(j),hpi(j),hz(k),hzi(k),&
+                         TI4D(1,1,1,1),nr,nphi,nz)
+         ti_temp = max(fval(1),zero)
+         ! Assume 1 and 2 are D and T
+         CALL R8HERM3FCN(ict,1,1,fval,i,j,k,xparam,yparam,zparam,&
+                         hr(i),hri(i),hp(j),hpi(j),hz(k),hzi(k),&
+                         NI5D(1,1,1,1,1),nr,nphi,nz)
+         nd_temp = max(fval(1),zero)
          IF (ti_temp <= zero) RETURN ! Get out if ti small
          ti_temp = ti_temp*1E-3 ! to keV
          zeta =  one - ((((CARR(6)*ti_temp)+CARR(4))*ti_temp+CARR(2))*ti_temp)/ &
@@ -1131,34 +1083,27 @@ MODULE beams3d_physics_mod
          ! Setup position in a vll arrays
          r_temp   = q(1)
          phi_temp = MODULO(q(2), phimax)
-         IF (phi_temp < 0) phi_temp = phi_temp + phimax
          z_temp   = q(3)
 
          ! Initialize values
          ti_temp = 0; nd_temp = 0; reactrate = 0
 
-         ! Check that we're inside the domain then proceed
-         IF ((r_temp >= rmin-eps1) .and. (r_temp <= rmax+eps1) .and. &
-             (phi_temp >= phimin-eps2) .and. (phi_temp <= phimax+eps2) .and. &
-             (z_temp >= zmin-eps3) .and. (z_temp <= zmax+eps3)) THEN
-            i = MIN(MAX(COUNT(raxis < r_temp),1),nr-1)
-            j = MIN(MAX(COUNT(phiaxis < phi_temp),1),nphi-1)
-            k = MIN(MAX(COUNT(zaxis < z_temp),1),nz-1)
-            xparam = (r_temp - raxis(i)) * hri(i)
-            yparam = (phi_temp - phiaxis(j)) * hpi(j)
-            zparam = (z_temp - zaxis(k)) * hzi(k)
-            ! Evaluate the Splines
-            CALL R8HERM3FCN(ict,1,1,fval,i,j,k,xparam,yparam,zparam,&
-                            hr(i),hri(i),hp(j),hpi(j),hz(k),hzi(k),&
-                            TI4D(1,1,1,1),nr,nphi,nz)
-            ti_temp = max(fval(1),zero)
-            CALL R8HERM3FCN(ict,1,1,fval,i,j,k,xparam,yparam,zparam,&
-                            hr(i),hri(i),hp(j),hpi(j),hz(k),hzi(k),&
-                            NI5D(1,1,1,1,1),nr,nphi,nz)
-            nd_temp = max(fval(1),zero)
-         ELSE
-            RETURN
-         END IF
+         ! Interpolate
+         i = MIN(MAX(COUNT(raxis < r_temp),1),nr-1)
+         j = MIN(MAX(COUNT(phiaxis < phi_temp),1),nphi-1)
+         k = MIN(MAX(COUNT(zaxis < z_temp),1),nz-1)
+         xparam = (r_temp - raxis(i)) * hri(i)
+         yparam = (phi_temp - phiaxis(j)) * hpi(j)
+         zparam = (z_temp - zaxis(k)) * hzi(k)
+         ! Evaluate the Splines
+         CALL R8HERM3FCN(ict,1,1,fval,i,j,k,xparam,yparam,zparam,&
+                         hr(i),hri(i),hp(j),hpi(j),hz(k),hzi(k),&
+                         TI4D(1,1,1,1),nr,nphi,nz)
+         ti_temp = max(fval(1),zero)
+         CALL R8HERM3FCN(ict,1,1,fval,i,j,k,xparam,yparam,zparam,&
+                         hr(i),hri(i),hp(j),hpi(j),hz(k),hzi(k),&
+                         NI5D(1,1,1,1,1),nr,nphi,nz)
+         nd_temp = max(fval(1),zero)
          IF (ti_temp <= zero) RETURN ! Get out if ti small
          ti_temp = ti_temp*1E-3 ! to keV
          zeta =  one - ((((CARR(6)*ti_temp)+CARR(4))*ti_temp+CARR(2))*ti_temp)/ &
@@ -1211,30 +1156,24 @@ MODULE beams3d_physics_mod
          ! Setup position in a vll arrays
          r_temp   = q(1)
          phi_temp = MODULO(q(2), phimax)
-         IF (phi_temp < 0) phi_temp = phi_temp + phimax
+         !IF (phi_temp < 0) phi_temp = phi_temp + phimax
          z_temp   = q(3)
 
          ! Initialize values
          B = zero
 
-         ! Check that we're inside the domain then proceed
-         IF ((r_temp >= rmin-eps1) .and. (r_temp <= rmax+eps1) .and. &
-             (phi_temp >= phimin-eps2) .and. (phi_temp <= phimax+eps2) .and. &
-             (z_temp >= zmin-eps3) .and. (z_temp <= zmax+eps3)) THEN
-            i = MIN(MAX(COUNT(raxis < r_temp),1),nr-1)
-            j = MIN(MAX(COUNT(phiaxis < phi_temp),1),nphi-1)
-            k = MIN(MAX(COUNT(zaxis < z_temp),1),nz-1)
-            xparam = (r_temp - raxis(i)) * hri(i)
-            yparam = (phi_temp - phiaxis(j)) * hpi(j)
-            zparam = (z_temp - zaxis(k)) * hzi(k)
-            ! Evaluate the Splines
-            CALL R8HERM3FCN(ict,1,1,fval,i,j,k,xparam,yparam,zparam,&
-                            hr(i),hri(i),hp(j),hpi(j),hz(k),hzi(k),&
-                            MODB4D(1,1,1,1),nr,nphi,nz)
-            B = max(fval(1),zero)
-         ELSE
-            RETURN
-         END IF
+         ! Interpolate
+         i = MIN(MAX(COUNT(raxis < r_temp),1),nr-1)
+         j = MIN(MAX(COUNT(phiaxis < phi_temp),1),nphi-1)
+         k = MIN(MAX(COUNT(zaxis < z_temp),1),nz-1)
+         xparam = (r_temp - raxis(i)) * hri(i)
+         yparam = (phi_temp - phiaxis(j)) * hpi(j)
+         zparam = (z_temp - zaxis(k)) * hzi(k)
+         ! Evaluate the Splines
+         CALL R8HERM3FCN(ict,1,1,fval,i,j,k,xparam,yparam,zparam,&
+                         hr(i),hri(i),hp(j),hpi(j),hz(k),hzi(k),&
+                         MODB4D(1,1,1,1),nr,nphi,nz)
+         B = max(fval(1),zero)
 
          RETURN
 
@@ -1279,28 +1218,23 @@ MODULE beams3d_physics_mod
          ! Setup position in a vll arrays
          r_temp   = q(1)
          phi_temp = MODULO(q(2), phimax)
-         IF (phi_temp < 0) phi_temp = phi_temp + phimax
          z_temp   = q(3)
 
          ! Initialize values
          S = 2
 
-         ! Check that we're inside the domain then proceed
-         IF ((r_temp >= rmin-eps1) .and. (r_temp <= rmax+eps1) .and. &
-             (phi_temp >= phimin-eps2) .and. (phi_temp <= phimax+eps2) .and. &
-             (z_temp >= zmin-eps3) .and. (z_temp <= zmax+eps3)) THEN
-            i = MIN(MAX(COUNT(raxis < r_temp),1),nr-1)
-            j = MIN(MAX(COUNT(phiaxis < phi_temp),1),nphi-1)
-            k = MIN(MAX(COUNT(zaxis < z_temp),1),nz-1)
-            xparam = (r_temp - raxis(i)) * hri(i)
-            yparam = (phi_temp - phiaxis(j)) * hpi(j)
-            zparam = (z_temp - zaxis(k)) * hzi(k)
-            ! Evaluate the Splines
-            CALL R8HERM3FCN(ict,1,1,fval,i,j,k,xparam,yparam,zparam,&
-                            hr(i),hri(i),hp(j),hpi(j),hz(k),hzi(k),&
-                            S4D(1,1,1,1),nr,nphi,nz)
-            S = max(fval(1),zero)
-         END IF
+         ! Interpolate
+         i = MIN(MAX(COUNT(raxis < r_temp),1),nr-1)
+         j = MIN(MAX(COUNT(phiaxis < phi_temp),1),nphi-1)
+         k = MIN(MAX(COUNT(zaxis < z_temp),1),nz-1)
+         xparam = (r_temp - raxis(i)) * hri(i)
+         yparam = (phi_temp - phiaxis(j)) * hpi(j)
+         zparam = (z_temp - zaxis(k)) * hzi(k)
+         ! Evaluate the Splines
+         CALL R8HERM3FCN(ict,1,1,fval,i,j,k,xparam,yparam,zparam,&
+                         hr(i),hri(i),hp(j),hpi(j),hz(k),hzi(k),&
+                         S4D(1,1,1,1),nr,nphi,nz)
+         S = max(fval(1),zero)
 
          RETURN
 
@@ -1356,7 +1290,7 @@ MODULE beams3d_physics_mod
          IF (r_out<0) r_out = raxis(1)+(raxis(nr)-raxis(1))*.75
          
          ! PHI does not change
-         phi_out = MOD(v,MAXVAL(phiaxis))
+         phi_out = MODULO(v,phimax)
          j = MIN(MAX(COUNT(phiaxis < phi_out),1),nphi-1)
          yparam = (phi_out - phiaxis(j)) * hpi(j)
 
@@ -1463,7 +1397,7 @@ MODULE beams3d_physics_mod
          ! Setup position in a vll arrays
          r_temp   = q(1)
          phi_temp = MODULO(q(2), phimax)
-         IF (phi_temp < 0) phi_temp = phi_temp + phimax
+         !IF (phi_temp < 0) phi_temp = phi_temp + phimax
          z_temp   = q(3)
 
          ! Initialize values
@@ -1472,26 +1406,20 @@ MODULE beams3d_physics_mod
          Z0      = (zaxis(nr)-zaxis(1))*half+zaxis(1)
          r       = SQRT((r_temp-R0)*(r_temp-R0)+(z_temp-Z0)*(z_temp-Z0))
 
-         ! Check that we're inside the domain then proceed
-         IF ((r_temp >= rmin-eps1) .and. (r_temp <= rmax+eps1) .and. &
-             (phi_temp >= phimin-eps2) .and. (phi_temp <= phimax+eps2) .and. &
-             (z_temp >= zmin-eps3) .and. (z_temp <= zmax+eps3)) THEN
-            i = MIN(MAX(COUNT(raxis < r_temp),1),nr-1)
-            j = MIN(MAX(COUNT(phiaxis < phi_temp),1),nphi-1)
-            k = MIN(MAX(COUNT(zaxis < z_temp),1),nz-1)
-            xparam = (r_temp - raxis(i)) * hri(i)
-            yparam = (phi_temp - phiaxis(j)) * hpi(j)
-            zparam = (z_temp - zaxis(k)) * hzi(k)
-            ! Evaluate the Splines
-            CALL R8HERM3FCN(ict,1,1,fval,i,j,k,xparam,yparam,zparam,&
-                            hr(i),hri(i),hp(j),hpi(j),hz(k),hzi(k),&
-                            MODB4D(1,1,1,1),nr,nphi,nz)
-            !vperp = SQRT(2*mu*fval(1)/mass)
-            !fbounce = vperp*SQRT(half*r/R0)/(R0*pi2) ! assume q=1
-            fbounce = SQRT(r*mu*fval(1)/(mass*R0*R0*R0*pi2*pi2))
-         ELSE
-            RETURN
-         END IF
+         ! Interpolate
+         i = MIN(MAX(COUNT(raxis < r_temp),1),nr-1)
+         j = MIN(MAX(COUNT(phiaxis < phi_temp),1),nphi-1)
+         k = MIN(MAX(COUNT(zaxis < z_temp),1),nz-1)
+         xparam = (r_temp - raxis(i)) * hri(i)
+         yparam = (phi_temp - phiaxis(j)) * hpi(j)
+         zparam = (z_temp - zaxis(k)) * hzi(k)
+         ! Evaluate the Splines
+         CALL R8HERM3FCN(ict,1,1,fval,i,j,k,xparam,yparam,zparam,&
+                         hr(i),hri(i),hp(j),hpi(j),hz(k),hzi(k),&
+                         MODB4D(1,1,1,1),nr,nphi,nz)
+         !vperp = SQRT(2*mu*fval(1)/mass)
+         !fbounce = vperp*SQRT(half*r/R0)/(R0*pi2) ! assume q=1
+         fbounce = SQRT(r*mu*fval(1)/(mass*R0*R0*R0*pi2*pi2))
 
          RETURN
 
